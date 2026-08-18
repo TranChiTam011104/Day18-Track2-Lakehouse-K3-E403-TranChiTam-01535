@@ -1,33 +1,30 @@
 ## Day 18 Lakehouse Lab — student UX
 ## Two paths: lightweight (default, pure Python) and Spark (Docker, optional).
 
-VENV       := .venv
-PY         := $(VENV)/bin/python
-PIP        := $(VENV)/bin/pip
-JUPYTER    := $(VENV)/bin/jupyter
-JUPYTEXT   := $(VENV)/bin/jupytext
-PYTEST     := $(VENV)/bin/pytest
+CONDA_ENV   := env
+PY          := conda run -n $(CONDA_ENV) python
+PIP         := conda run -n $(CONDA_ENV) pip
+JUPYTER     := conda run -n $(CONDA_ENV) python -m jupyterlab
+JUPYTEXT    := conda run -n $(CONDA_ENV) jupytext
+PYTEST      := conda run -n $(CONDA_ENV) pytest
 COMPOSE    := docker compose -f docker/docker-compose.yml
 
 .DEFAULT_GOAL := help
 
 help: ## Show this help
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nLightweight path (default — no Docker):\n"} \
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nConda path (default):\n"} \
 	      /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 # ─────────────────────────────────────────────────────────────
-# Lightweight path (default) — pure Python, no Docker, no JVM
+# Conda path (default) — pure Python, no Docker, no JVM
 # ─────────────────────────────────────────────────────────────
 
-setup: ## [lite] Create venv + install deps (~180 MB, ~20s with pip / ~4s with uv)
-	@command -v uv >/dev/null 2>&1 && uv venv $(VENV) --python '>=3.10,<3.15' || python3 -m venv $(VENV)
-	@$(PY) -c 'import sys; raise SystemExit(0 if (3,10)<=sys.version_info[:2]<(3,15) else 1)' \
-	  || { echo "ERROR: need Python 3.10-3.14. Install 'uv' (auto-fetches one) or run: python3.12 -m venv .venv"; exit 1; }
-	@command -v uv >/dev/null 2>&1 && uv pip install --python $(PY) -r requirements.txt \
-	  || $(PIP) install -q -r requirements.txt
+setup: ## [conda] Install deps into existing conda env
+	@$(PIP) install -q -r requirements.txt
 	@$(JUPYTEXT) --to notebook --update notebooks/*.py 2>/dev/null || $(JUPYTEXT) --to notebook notebooks/*.py
 	@echo ""
-	@echo "  ✓ Setup complete. Run 'make smoke' then 'make lab'."
+	@echo "  ✓ Setup complete. Activate env: conda activate $(CONDA_ENV)"
+	@echo "  Then run 'make smoke' then 'make lab'."
 
 smoke: ## [lite] ~15-second end-to-end smoke test (Delta + Iceberg + vectors)
 	@$(PY) scripts/verify_lite.py
@@ -35,9 +32,9 @@ smoke: ## [lite] ~15-second end-to-end smoke test (Delta + Iceberg + vectors)
 test: ## [lite] Run the pytest suite the instructor grades against
 	@$(PYTEST) -q
 
-lab: ## [lite] Open Jupyter Lab on http://localhost:8888
-	@$(JUPYTEXT) --to notebook --update notebooks/*.py 2>/dev/null || true
-	@$(JUPYTER) lab --notebook-dir=notebooks --ServerApp.token='' --no-browser
+lab: ## [conda] Open Jupyter Lab on http://localhost:8888
+	@$(JUPYTEXT) --to notebook --update notebooks/*.py 2>nul || (call )
+	@cd notebooks && $(PY) -m jupyter lab --no-browser
 
 data: ## [lite] Generate 200K-row Bronze sample for NB4
 	@$(PY) scripts/generate_data_lite.py
@@ -51,8 +48,9 @@ run-all: ## [lite] Execute every notebook headlessly (what CI does)
 simulate: ## [lite] Abuse the lab the way students do (12 scenarios; SIM_FAST=1 to skip venv builds)
 	@$(PY) tests/simulate_students.py
 
-clean: ## [lite] Wipe venv + lakehouse data
-	rm -rf $(VENV) _lakehouse notebooks/.ipynb_checkpoints .pytest_cache
+clean: ## [conda] Wipe conda env + lakehouse data
+	conda env remove -n $(CONDA_ENV) -y 2>nul || (call )
+	@cmd /c "rmdir /s /q _lakehouse 2>nul & del /q notebooks\.ipynb_checkpoints 2>nul & rmdir /s /q .pytest_cache 2>nul & exit /b 0"
 
 # ─────────────────────────────────────────────────────────────
 # Spark on Apple `container` (optional) — macOS 15+, Apple silicon

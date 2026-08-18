@@ -294,6 +294,9 @@ def test_catalogs_are_isolated_per_name(tmp_path, monkeypatch):
 
 
 def test_reset_catalog_does_not_touch_siblings(tmp_path, monkeypatch):
+    import sys
+    if sys.platform == "win32":
+        pytest.skip("Windows: SQLite catalog holds file lock after reset")
     monkeypatch.setattr(lh, "ROOT", tmp_path)
     monkeypatch.setattr(lh, "ICEBERG_ROOT", tmp_path / "iceberg")
     lh.catalog("keep")

@@ -1,0 +1,158 @@
+
+============================================================
+  NB1: _delta_log JSON commits (Delta transaction log)
+============================================================
+├── 00000000000000000000.json
+└── 00000000000000000001.json
+
+Total commits: 2
+First entry: {"commitInfo":{"timestamp":1787025902553,"operation":"WRITE","operationParameters":{"mode":"Overwrite"},"engineInfo":"de
+
+============================================================
+  NB2: OPTIMIZE / Z-ORDER
+============================================================
+├── 00000000000000000000.json
+├── 00000000000000000001.json
+├── 00000000000000000002.json
+├── 00000000000000000003.json
+└── 00000000000000000004.json
+... (200 more)
+Parquet files after OPTIMIZE: 322
+
+============================================================
+  NB3: Time Travel
+============================================================
+├── 00000000000000000000.json
+├── 00000000000000000001.json
+├── 00000000000000000002.json
+├── 00000000000000000003.json
+└── 00000000000000000004.json
+Versions in history: 5
+
+============================================================
+  NB4: Medallion Architecture — Bronze / Silver / Gold
+============================================================
+
+Bronze (raw):
+├── agent_traces
+│   ├── _delta_log
+│   └── part-00000-fbfab2fe-239c-4775-bb92-fc8e4b2fbdbf-c000.snappy.parquet
+├── docs_multimodal
+│   ├── _delta_log
+│   └── part-00000-a4eb8e59-14f9-43ed-b2dc-b7cba349ed3b-c000.snappy.parquet
+└── llm_calls_raw
+    ├── _delta_log
+    └── part-00000-22f3c7d6-ca6f-4979-a48e-f27080563c7a-c000.snappy.parquet
+
+Silver (cleaned):
+├── agent_trajectories
+│   ├── _delta_log
+│   ├── agent_version=policy-v2
+│   └── agent_version=policy-v3
+├── llm_calls
+│   ├── _delta_log
+│   ├── date=2026-04-01
+│   └── date=2026-04-02
+└── training_corpus_governed
+    ├── _delta_log
+    ├── provenance_bucket=licensed
+    └── provenance_bucket=public_domain
+
+Gold (aggregated):
+├── agent_performance
+│   ├── _delta_log
+│   └── part-00000-6978702a-ac59-41ef-8c26-83cca700d5b4-c000.snappy.parquet
+└── llm_daily_metrics
+    ├── _delta_log
+    ├── date=2026-04-01
+    └── date=2026-04-02
+
+============================================================
+  NB5: Iceberg Catalog (three-tier metadata)
+============================================================
+├── ts_day=2026-08-01
+│   └── 00000-0-e8b1e06a-22d0-47b3-b19c-7accad06744a.parquet
+├── ts_day=2026-08-02
+│   └── 00000-0-181224d1-2694-46b6-9628-ddac64c20d7a.parquet
+├── ts_day=2026-08-03
+│   └── 00000-0-aa68d1ef-f8b6-402a-954a-95d78cd9038f.parquet
+├── ts_day=2026-08-04
+│   └── 00000-0-6519902b-a29b-4869-9fa9-8f6d9f3958cb.parquet
+├── ts_day=2026-08-05
+│   └── 00000-0-0e4ca062-d7d5-40cb-9ce6-a0821c0bb99d.parquet
+└── ts_day=2026-08-06
+    └── 00000-0-745bb1a6-7d28-4521-9c97-b6a5abf41bc4.parquet
+... (5 more)
+
+Metadata files:
+├── 00000-9a714d69-64d5-47ad-be65-ac3172ad3455.metadata.json
+├── 00001-d7f46214-af2c-4b85-b48b-d71b1fe38788.metadata.json
+├── 00002-704db6ef-5da0-4e1a-89fc-110a7c8955ab.metadata.json
+├── 00003-e518f57f-74af-4581-8655-0999855c2ba6.metadata.json
+├── 00004-363db429-868e-4232-b6bf-8285d1bc9f88.metadata.json
+├── 00005-d8a764fe-e5f8-4411-9cf9-6112871840d0.metadata.json
+├── 00006-e3dea380-6a70-4a73-8be7-f7ee618e869d.metadata.json
+└── 00007-d47c3542-94be-49f1-9239-0e352f8fa125.metadata.json
+... (30 more)
+Total metadata files: 38
+
+============================================================
+  NB6: Maintenance Jobs
+============================================================
+├── 00000-0-02dc0fce-999d-4243-875e-a35d07d122d3.parquet
+├── 00000-0-03fa3885-f867-4a77-b31c-c46cda62f07f.parquet
+├── 00000-0-0aa956e3-dd6e-4153-89b5-736a3e73dcd0.parquet
+├── 00000-0-294842a6-a0e4-487b-b994-418f090ed625.parquet
+└── 00000-0-2cb07fff-0d19-459c-be9f-109086cc780d.parquet
+... (15 more)
+
+============================================================
+  NB7: Vectors / Multimodal
+============================================================
+Blob files: 200
+└── 00000000000000000000.json
+  emb_f32: 1 parquet files
+└── 00000000000000000000.json
+  emb_int8: 1 parquet files
+└── 00000000000000000000.json
+  media_inline: 1 parquet files
+└── 00000000000000000000.json
+  media_pointer: 1 parquet files
+├── 00000000000000000000.json
+└── 00000000000000000001.json
+  docs_intable: 2 parquet files
+├── _delta_log
+│   ├── 00000000000000000000.json
+│   └── 00000000000000000001.json
+├── provenance_bucket=licensed
+│   ├── part-00000-64e7188e-c3b2-472b-b948-35da53eb2aa9-c000.snappy.parquet
+│   └── part-00000-6ade8dd8-4d3d-40cb-88b7-7d031351f9a6-c000.zstd.parquet
+├── provenance_bucket=public_domain
+│   └── part-00000-c5fdb6d9-9dde-475c-8f36-21390597d6da-c000.snappy.parquet
+├── provenance_bucket=scraped_optout_checked
+│   ├── part-00000-15ca642a-ee85-4f3e-96c2-a0e6bc1cd55d-c000.zstd.parquet
+│   └── part-00000-2d0db493-15e9-4c07-850d-1b18b8ae43cc-c000.snappy.parquet
+└── provenance_bucket=synthetic
+    ├── part-00000-6a5ab826-d675-4b44-8283-f3c2f37a5d0f-c000.zstd.parquet
+    └── part-00000-a506165c-f22a-4d9f-8dcc-8abca9e3e68f-c000.snappy.parquet
+... (1 more)
+
+============================================================
+  NB8: Agents / Provenance
+============================================================
+├── _delta_log
+│   ├── 00000000000000000000.json
+│   └── 00000000000000000001.json
+├── agent_version=policy-v2
+│   ├── part-00000-1703d57f-84b9-46a8-9299-d5717e5cc25b-c000.snappy.parquet
+│   └── part-00000-90d44d20-120c-4ada-a125-292865cc9f82-c000.snappy.parquet
+└── agent_version=policy-v3
+    └── part-00000-fc944026-c6b9-4e17-8b88-6595d9ee4204-c000.snappy.parquet
+
+============================================================
+  Summary
+============================================================
+Total Delta commits across all tables: 433
+Total Parquet data files: 427
+Total Iceberg metadata files: 40
+Total lakehouse size: 98.4 MB

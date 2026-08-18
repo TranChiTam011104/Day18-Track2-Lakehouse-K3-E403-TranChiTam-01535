@@ -92,8 +92,23 @@ def reset_catalog(name: str = "lab") -> None:
     Scoped to `name` on purpose — see `_catalog_dir`.
     """
     import shutil
+    import sqlite3
+    import time
 
-    shutil.rmtree(_catalog_dir(name), ignore_errors=True)
+    d = _catalog_dir(name)
+    db = d / "catalog.db"
+    if db.exists():
+        try:
+            sqlite3.connect(f"sqlite:///{db}").close()
+        except Exception:
+            pass
+    # On Windows, SQLite may hold the file for ~1s after last connection.
+    # Retry shutil.rmtree with a brief pause so the test never flakes.
+    for _ in range(5):
+        shutil.rmtree(d, ignore_errors=True)
+        if not d.exists():
+            return
+        time.sleep(0.5)
 
 
 def namespace(cat, ns: str = "lake"):
